@@ -45,11 +45,16 @@ class Command(BaseCommand):
         # 4. Create Course Contents & Sub Contents & Comments
         for course in courses:
             for i in range(3):
+                video_url = f'/static/videos/materi{i+1}.mp4'
                 content, _ = CourseContent.objects.get_or_create(
                     course_id=course,
                     name=f'Materi {i+1}: Pengenalan {course.name}',
-                    description=f'Ini adalah penjelasan materi {i+1}'
+                    description=f'Ini adalah penjelasan materi {i+1}',
+                    defaults={'video_url': video_url}
                 )
+                if not content.video_url:
+                    content.video_url = video_url
+                    content.save()
                 # Add a sub-content
                 sub, _ = CourseContent.objects.get_or_create(
                     course_id=course,
