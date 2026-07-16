@@ -11,13 +11,6 @@ postgres-data/
 *.db
 db.sqlite3
 
-# Video folders and video files
-VID-PEME=BELAJARAN.mp4/
-*.mp4
-*.avi
-*.mkv
-*.mov
-
 # PDF documents (e.g., lecture slides)
 *.pdf
 
