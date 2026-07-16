@@ -1,0 +1,42 @@
+{% extends "core/base.html" %}
+
+{% block title %}Achievement Saya{% endblock %}
+{% block header %}Achievement & Sertifikat{% endblock %}
+
+{% block content %}
+<div class="row">
+    {% if certificates %}
+    <div class="row">
+        {% for cert in certificates %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-start border-warning border-4 p-3">
+                <div class="d-flex align-items-center mb-3">
+                    <div>
+                        <h5 class="fw-bold mb-0 text-dark">
+                            {% if cert.member.course_id.name %}
+                            {{ cert.member.course_id.name }}
+                            {% else %}
+                            {{ cert.member.course_id }}
+                            {% endif %}
+                        </h5>
+                    </div>
+                </div>
+                <p class="text-muted small">Selamat! Anda telah menyelesaikan seluruh materi kelas ini dengan predikat
+                    kelulusan penuh.</p>
+
+                <a href="{% url 'download_certificate' cert.member.course_id_id %}"
+                    class="btn btn-outline-warning btn-sm mt-auto fw-semibold">
+                    <i class="bi bi-download me-1"></i> Unduh Sertifikat
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="col-12 text-center py-5">
+        <div class="text-muted mb-3"><i class="bi bi-award fs-1"></i></div>
+        <h5 class="fw-semibold">Belum Ada Achievement</h5>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

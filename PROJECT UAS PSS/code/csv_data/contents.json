@@ -1,0 +1,5 @@
+[
+    {"course_id": 1, "name": "Intro Django", "description": "Belajar dasar django", "video_url": "https://youtube.com/1"},
+    {"course_id": 1, "name": "Models", "description": "Belajar model django", "video_url": "https://youtube.com/2"},
+    {"course_id": 2, "name": "Intro Web", "description": "Belajar dasar web", "video_url": "https://youtube.com/3"}
+]

@@ -1,0 +1,450 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block content %}
+
+<style>
+  /* ── Hero Section ── */
+  .hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+  }
+
+  .hero-section::after {
+    content: '';
+    position: absolute;
+    bottom: -40%;
+    right: 15%;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 50%;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+    font-weight: 800;
+  }
+
+  .hero-sub {
+    opacity: .85;
+    font-size: 1rem;
+  }
+
+  /* ── Search & Filter Bar ── */
+  .filter-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07);
+    margin-bottom: 1.75rem;
+  }
+
+  .search-input {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: .65rem 1rem;
+    font-size: .95rem;
+    transition: border-color .25s;
+  }
+
+  .search-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, .15);
+    outline: none;
+  }
+
+  .btn-search {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: .65rem 1.5rem;
+    font-weight: 600;
+    transition: opacity .2s, transform .15s;
+  }
+
+  .btn-search:hover {
+    opacity: .9;
+    transform: translateY(-1px);
+    color: #fff;
+  }
+
+  /* ── Sort Buttons ── */
+  .sort-btn {
+    border-radius: 8px;
+    padding: .4rem .9rem;
+    font-size: .85rem;
+    font-weight: 600;
+    border: 2px solid #e9ecef;
+    background: #fff;
+    color: #555;
+    transition: all .2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+  }
+
+  .sort-btn:hover,
+  .sort-btn.active {
+    border-color: #667eea;
+    background: #667eea;
+    color: #fff;
+  }
+
+  /* ── Course Card ── */
+  .course-card {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+    transition: transform .3s, box-shadow .3s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border: none;
+  }
+
+  .course-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 35px rgba(102, 126, 234, .2);
+  }
+
+  .course-thumb {
+    height: 160px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .course-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .course-thumb .thumb-icon {
+    font-size: 3.5rem;
+    opacity: .6;
+  }
+
+  .course-badge-teacher {
+    position: absolute;
+    bottom: .6rem;
+    left: .75rem;
+    background: rgba(0, 0, 0, .45);
+    color: #fff;
+    font-size: .72rem;
+    padding: .2rem .55rem;
+    border-radius: 20px;
+    backdrop-filter: blur(4px);
+  }
+
+  .course-body {
+    padding: 1.25rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .course-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: .4rem;
+    line-height: 1.4;
+  }
+
+  .course-desc {
+    font-size: .85rem;
+    color: #6c757d;
+    flex: 1;
+    margin-bottom: .9rem;
+  }
+
+  .course-price {
+    font-weight: 700;
+    color: #667eea;
+    font-size: 1rem;
+  }
+
+  .btn-detail {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: .5rem 1rem;
+    font-size: .85rem;
+    font-weight: 600;
+    transition: opacity .2s, transform .15s;
+    text-decoration: none;
+    text-align: center;
+    margin-top: .75rem;
+  }
+
+  .btn-detail:hover {
+    opacity: .9;
+    transform: translateY(-1px);
+    color: #fff;
+  }
+
+  /* ── Empty State ── */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: #adb5bd;
+  }
+
+  .empty-state .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+  }
+
+  /* ── Pagination ── */
+  .pagination-container {
+    margin-top: 2rem;
+  }
+
+  .page-link {
+    border-radius: 8px !important;
+    margin: 0 2px;
+    border: 2px solid #e9ecef;
+    color: #667eea;
+    font-weight: 600;
+    padding: .45rem .9rem;
+    transition: all .2s;
+  }
+
+  .page-link:hover {
+    background: #667eea;
+    border-color: #667eea;
+    color: #fff;
+  }
+
+  .page-item.active .page-link {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-color: #667eea;
+    color: #fff;
+  }
+
+  .page-item.disabled .page-link {
+    color: #ced4da;
+  }
+
+  /* ── Result Info ── */
+  .result-info {
+    font-size: .875rem;
+    color: #6c757d;
+    margin-bottom: 1rem;
+  }
+
+  .highlight {
+    color: #667eea;
+    font-weight: 700;
+  }
+</style>
+
+<!-- ── HERO ── -->
+<div class="hero-section">
+  <div class="position-relative" style="z-index:1">
+    <p class="hero-sub mb-1">📚 Platform Pembelajaran</p>
+    <h1 class="hero-title">Daftar Kursus LMS</h1>
+    <p class="hero-sub mt-1">Temukan dan ikuti kursus terbaik sesuai minat Anda</p>
+  </div>
+</div>
+
+<!-- ── FILTER & SEARCH BAR ── -->
+<div class="filter-card">
+  <form method="GET" action="" id="filterForm">
+    <div class="row g-2 align-items-end">
+
+      <!-- Search -->
+      <div class="col-md-5">
+        <label class="form-label small fw-semibold text-muted mb-1">🔍 Cari Kursus</label>
+        <input id="searchInput" type="text" name="search" class="search-input w-100" placeholder="Ketik nama kursus..."
+          value="{{ search }}" autocomplete="off">
+      </div>
+
+      <!-- Sort -->
+      <div class="col-md-5">
+        <label class="form-label small fw-semibold text-muted mb-1">🔃 Urutkan</label>
+        <div class="d-flex flex-wrap gap-1">
+          <a href="?search={{ search }}&sort=id" class="sort-btn {% if sort == 'id' %}active{% endif %}">
+            🆔 Default
+          </a>
+          <a href="?search={{ search }}&sort=name" class="sort-btn {% if sort == 'name' %}active{% endif %}">
+            🔤 A→Z
+          </a>
+          <a href="?search={{ search }}&sort=-name" class="sort-btn {% if sort == '-name' %}active{% endif %}">
+            🔤 Z→A
+          </a>
+          <a href="?search={{ search }}&sort=price" class="sort-btn {% if sort == 'price' %}active{% endif %}">
+            💲 Termurah
+          </a>
+          <a href="?search={{ search }}&sort=-price" class="sort-btn {% if sort == '-price' %}active{% endif %}">
+            💲 Termahal
+          </a>
+        </div>
+      </div>
+
+      <!-- Tombol -->
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn-search w-100">Cari</button>
+        {% if search %}
+        <a href="?" class="btn btn-outline-secondary rounded-3 px-3 fw-semibold" title="Reset">✕</a>
+        {% endif %}
+      </div>
+
+      <!-- Simpan sort di form juga -->
+      <input type="hidden" name="sort" value="{{ sort }}">
+    </div>
+  </form>
+</div>
+
+<!-- ── RESULT INFO ── -->
+<div class="result-info">
+  {% if search %}
+  Menampilkan hasil pencarian untuk <span class="highlight">"{{ search }}"</span> —
+  {% endif %}
+  Ditemukan <span class="highlight">{{ page_obj.paginator.count }}</span> kursus
+  &nbsp;|&nbsp;
+  Halaman <span class="highlight">{{ page_obj.number }}</span>
+  dari <span class="highlight">{{ page_obj.paginator.num_pages }}</span>
+</div>
+
+<!-- ── DAFTAR KURSUS ── -->
+{% if page_obj.object_list %}
+<div class="row g-4">
+  {% for course in page_obj %}
+  <div class="col-sm-6 col-lg-4 col-xl-3">
+    <div class="course-card">
+
+      <!-- Thumbnail -->
+      <div class="course-thumb">
+        {% if course.image %}
+        <img src="{{ course.image.url }}" alt="{{ course.name }}">
+        {% else %}
+        <span class="thumb-icon">🎓</span>
+        {% endif %}
+        <span class="course-badge-teacher">
+          👤 {{ course.teacher.get_full_name|default:course.teacher.username }}
+        </span>
+      </div>
+
+      <!-- Body -->
+      <div class="course-body">
+        <div class="course-name">{{ course.name }}</div>
+        <div class="course-desc">{{ course.description|truncatewords:18 }}</div>
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="course-price">
+            Rp {{ course.price|floatformat:0 }}
+          </span>
+        </div>
+        <a href="{% url 'course_detail' course.id %}" class="btn-detail">
+          Lihat Materi →
+        </a>
+      </div>
+
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ── PAGINATION ── -->
+<div class="pagination-container d-flex justify-content-center">
+  <nav aria-label="Navigasi halaman kursus">
+    <ul class="pagination">
+
+      <!-- Tombol Pertama & Sebelumnya -->
+      {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?search={{ search }}&sort={{ sort }}&page=1" title="Halaman pertama">«</a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?search={{ search }}&sort={{ sort }}&page={{ page_obj.previous_page_number }}">‹
+          Sebelumnya</a>
+      </li>
+      {% else %}
+      <li class="page-item disabled"><span class="page-link">«</span></li>
+      <li class="page-item disabled"><span class="page-link">‹ Sebelumnya</span></li>
+      {% endif %}
+
+      <!-- Nomor Halaman -->
+      {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+      <li class="page-item active">
+        <span class="page-link">{{ num }}</span>
+      </li>
+      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <li class="page-item">
+        <a class="page-link" href="?search={{ search }}&sort={{ sort }}&page={{ num }}">{{ num }}</a>
+        </li>
+        {% endif %}
+        {% endfor %}
+
+        <!-- Tombol Berikutnya & Terakhir -->
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link"
+            href="?search={{ search }}&sort={{ sort }}&page={{ page_obj.next_page_number }}">Berikutnya ›</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?search={{ search }}&sort={{ sort }}&page={{ page_obj.paginator.num_pages }}"
+            title="Halaman terakhir">»</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Berikutnya ›</span></li>
+        <li class="page-item disabled"><span class="page-link">»</span></li>
+        {% endif %}
+
+    </ul>
+  </nav>
+</div>
+
+{% else %}
+<!-- ── EMPTY STATE ── -->
+<div class="empty-state">
+  <div class="empty-icon">🔍</div>
+  <h4 class="fw-bold text-dark">Kursus tidak ditemukan</h4>
+  <p>Tidak ada kursus yang cocok dengan pencarian <strong>"{{ search }}"</strong></p>
+  <a href="?" class="btn-search d-inline-block mt-2" style="text-decoration:none">Tampilkan Semua Kursus</a>
+</div>
+{% endif %}
+
+<script>
+  // Auto-submit form saat klik tombol sort (agar search keyword tetap tersimpan)
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      const url = new URL(this.href, window.location.origin);
+      const searchVal = document.getElementById('searchInput').value;
+      url.searchParams.set('search', searchVal);
+      window.location.href = url.toString();
+    });
+  });
+</script>
+
+{% endblock %}

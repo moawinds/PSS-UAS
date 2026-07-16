@@ -1,0 +1,5 @@
+[
+    {"content_id": 1, "user_id": 2, "comment": "Wah penjelasannya bagus sekali pak!"},
+    {"content_id": 1, "user_id": 3, "comment": "Izin bertanya pak, kalau install django gimana?"},
+    {"content_id": 2, "user_id": 2, "comment": "Materi ini sangat membantu untuk UTS saya."}
+]

@@ -1,0 +1,13 @@
+django
+django-debug-toolbar
+django-extensions
+django-crispy-forms
+crispy-bootstrap5
+django-silk
+Pillow
+psycopg2-binary
+reportlab
+django-allauth
+django-ninja
+django-ninja-simple-jwt
+requests

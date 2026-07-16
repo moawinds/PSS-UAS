@@ -1,0 +1,444 @@
+{% extends "core/base.html" %}
+
+{% block title %}{{ course.name }}{% endblock %}
+
+{% block header %}{% endblock %}
+
+{% block content %}
+<style>
+    /* ── Main Layout ── */
+    .course-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+    .video-player-card {
+        background: #000;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        margin-bottom: 1.5rem;
+    }
+    /* ── Sidebar Playlist ── */
+    .playlist-card {
+        background: white;
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+    .playlist-title {
+        font-weight: 700;
+        color: #1a1a2e;
+        border-bottom: 1px solid #f1f3f5;
+        padding: 1.25rem;
+    }
+    .playlist-items {
+        max-height: 480px;
+        overflow-y: auto;
+    }
+    .playlist-item {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #f8f9fa;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+        color: #495057;
+    }
+    .playlist-item:hover {
+        background-color: #f8f9fa;
+        color: #667eea;
+    }
+    .playlist-item.active {
+        background-color: #eef2ff;
+        border-left: 4px solid #667eea;
+        color: #667eea;
+        font-weight: 600;
+    }
+    .playlist-item.completed {
+        color: #198754;
+    }
+
+    /* ── Quiz Box ── */
+    .quiz-card {
+        background: white;
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    /* ── Utility ── */
+    .btn-action {
+        border-radius: 50px;
+        font-weight: 700;
+        padding: 0.6rem 1.5rem;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    #videoPlayerContainer {
+        position: relative;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Header Kursus -->
+    <div class="course-header shadow-sm">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <span class="badge bg-white text-primary fw-bold mb-2">🎓 Kelas Aktif</span>
+                <h2 class="fw-bold mb-1">{{ course.name }}</h2>
+                <p class="mb-0 opacity-75">Diajarkan oleh: {{ course.teacher.get_full_name|default:course.teacher.username }}</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <div class="bg-white bg-opacity-20 p-3 rounded-3 d-inline-block text-start">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small fw-semibold me-4">Progres Belajar</span>
+                        <span class="badge bg-success">{{ progress_percent }}%</span>
+                    </div>
+                    <div class="progress" style="width: 180px; height: 8px; border-radius: 10px;">
+                        <div class="progress-bar bg-success" style="width: {{ progress_percent }}%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sertifikat jika lulus -->
+    {% if certificate %}
+    <div class="alert alert-success d-flex justify-content-between align-items-center mb-4 border-0 shadow-sm p-3 rounded-3">
+        <div>
+            <i class="bi bi-trophy-fill text-warning me-2 fs-5"></i>
+            <strong>Selamat!</strong> Anda telah menyelesaikan semua materi dan berhak mendapatkan sertifikat.
+        </div>
+        <a href="{% url 'download_certificate' course.id %}" class="btn btn-sm btn-success fw-bold px-3">
+            <i class="bi bi-download me-1"></i> Unduh Sertifikat (PDF)
+        </a>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- 🎥 AREA KIRI: PEMUTAR VIDEO DAN DETAIL MATERI -->
+        <div class="col-lg-8">
+            
+            <!-- Video Player Utama (Selalu Terlihat) -->
+            <div class="video-player-card">
+                <div id="videoPlayerContainer" style="aspect-ratio: 16/9; max-height: 480px; background: #111; position: relative;">
+                    <!-- Akan diisi secara dinamis oleh JavaScript -->
+                    <div id="videoLoadingOverlay" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#111;color:#fff;z-index:5;">
+                        <div style="font-size:48px;margin-bottom:12px;">▶</div>
+                        <p style="margin:0;font-size:14px;opacity:0.7;">Pilih materi untuk memulai menonton</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Info & Kuis -->
+            <div class="card border-0 shadow-sm p-4 mb-4 bg-white" style="border-radius: 16px;">
+                <h4 id="activeMateriTitle" class="fw-bold mb-2">Memuat judul materi...</h4>
+                <p id="activeMateriDesc" class="text-secondary mb-4">Memuat deskripsi materi...</p>
+                
+                <!-- File Lampiran -->
+                <div id="fileAttachmentBox" class="mb-4 d-none">
+                    <div class="d-flex align-items-center p-3 bg-light rounded-3 border">
+                        <i class="bi bi-file-earmark-zip-fill text-danger fs-3 me-3"></i>
+                        <div class="flex-grow-1">
+                            <span class="d-block fw-bold small text-dark">Lampiran Pendukung</span>
+                            <small class="text-muted">Modul pelengkap materi pembelajaran</small>
+                        </div>
+                        <a id="fileAttachmentBtn" href="#" class="btn btn-sm btn-outline-primary fw-bold" download>
+                            Unduh File
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Tandai Selesai Menonton -->
+                {% if is_member %}
+                <div class="text-end mb-3">
+                    <a id="btnTandaiSelesai" href="#" class="btn btn-outline-success btn-action shadow-sm d-none">
+                        <i class="bi bi-check2-circle me-2"></i> Tandai Selesai Belajar
+                    </a>
+                    <button id="btnSelesaiDisabled" class="btn btn-success btn-action d-none" disabled>
+                        <i class="bi bi-patch-check-fill me-2"></i> Materi Selesai
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Kuis Interaktif -->
+            <div class="card border-0 shadow-sm p-4 mb-4 bg-white quiz-card">
+                <div class="d-flex align-items-center mb-3">
+                    <span class="badge bg-warning text-dark me-2">Kuis Cepat</span>
+                    <h5 class="fw-bold mb-0 text-dark">Uji Pemahaman Anda</h5>
+                </div>
+                <p class="small text-dark fw-semibold mb-3">
+                    Pertanyaan: Manakah di bawah ini yang merupakan konsep atau keuntungan utama yang paling tepat dari materi yang baru saja Anda pelajari?
+                </p>
+                
+                <div class="quiz-options d-grid gap-2">
+                    <button class="btn btn-outline-secondary btn-sm text-start p-2.5 rounded-3 quiz-opt-btn" data-correct="true">
+                        A. Membantu menyederhanakan arsitektur kode, modularisasi sistem, dan meningkatkan kecepatan pengembangan.
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm text-start p-2.5 rounded-3 quiz-opt-btn" data-correct="false">
+                        B. Menghapus kebutuhan untuk menulis database dan logika bisnis backend secara keseluruhan.
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm text-start p-2.5 rounded-3 quiz-opt-btn" data-correct="false">
+                        C. Membuat server berjalan lambat karena memisahkan file modul eksternal.
+                    </button>
+                </div>
+                
+                <div class="quiz-feedback-box mt-3 d-none">
+                    <div class="alert py-2 px-3 small mb-0 rounded-3 shadow-sm"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 📄 AREA KANAN: DAFTAR PLAYLIST & PENGAJAR -->
+        <div class="col-lg-4">
+            
+            <!-- Playlist Kursus -->
+            <div class="card playlist-card mb-4">
+                <div class="playlist-title d-flex justify-content-between align-items-center">
+                    <h5 class="m-0 fw-bold">Playlist Materi</h5>
+                    <span class="badge bg-primary">{{ course.coursecontent_set.count }} Video</span>
+                </div>
+                
+                <div class="playlist-items">
+                    {% for content in course.coursecontent_set.all %}
+                    {% if not content.parent_id %}
+                    <div class="playlist-item {% if content.id in completed_content_ids %}completed{% endif %}" 
+                         data-id="{{ content.id }}"
+                         data-name="{{ content.name }}"
+                         data-desc="{{ content.description }}"
+                         data-video="{{ content.video_url }}"
+                         data-attachment="{% if content.file_attachment %}{{ content.file_attachment.url }}{% endif %}"
+                         data-completed="{% if content.id in completed_content_ids %}true{% else %}false{% endif %}"
+                         data-complete-url="{% url 'mark_complete' content.id %}">
+                        
+                        <div class="me-3">
+                            {% if content.id in completed_content_ids %}
+                            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                            {% else %}
+                            <i class="bi bi-play-circle-fill text-secondary fs-5"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <span class="d-block small fw-bold">{{ content.name }}</span>
+                            <small class="text-muted"><i class="bi bi-clock-history me-1"></i> Video Pembelajaran</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Tentang Pengajar & Tombol Daftar -->
+            <div class="card border-0 shadow-sm p-4 text-center bg-white" style="border-radius: 16px;">
+                <h5 class="fw-bold mb-4 text-start">Tentang Pengajar</h5>
+                <div class="mx-auto bg-light rounded-circle mb-3 d-flex align-items-center justify-content-center"
+                     style="width: 100px; height: 100px;">
+                    <img src="https://ui-avatars.com/api/?name={{ course.teacher.username }}&size=100&background=667eea&color=fff"
+                         class="rounded-circle">
+                </div>
+                <h6 class="fw-bold m-0">{{ course.teacher.get_full_name|default:course.teacher.username }}</h6>
+                <p class="text-muted small mb-4">Dosen Pemrograman Sisi Server</p>
+                <hr style="opacity: 0.1;">
+                
+                <div class="d-grid gap-2">
+                    {% if not is_member %}
+                    <a href="{% url 'enroll_course' course.id %}" class="btn btn-primary btn-action text-white">
+                        Daftar Sekarang
+                    </a>
+                    {% else %}
+                    <button class="btn btn-success btn-action text-white" disabled>
+                        ✓ Terdaftar Kelas
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript Kontrol Playlist & Video -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var playlistItems = document.querySelectorAll(".playlist-item");
+    var videoContainer = document.getElementById("videoPlayerContainer");
+    
+    var activeTitle = document.getElementById("activeMateriTitle");
+    var activeDesc = document.getElementById("activeMateriDesc");
+    var fileBox = document.getElementById("fileAttachmentBox");
+    var fileBtn = document.getElementById("fileAttachmentBtn");
+    
+    var btnTandaiSelesai = document.getElementById("btnTandaiSelesai");
+    var btnSelesaiDisabled = document.getElementById("btnSelesaiDisabled");
+
+    // Fungsi ekstrak YouTube ID dari berbagai format URL
+    function getYouTubeId(url) {
+        var regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        var match = url.match(regExp);
+        if (match && match[2].length === 11) {
+            return match[2];
+        }
+        if (url.length === 11) {
+            return url;
+        }
+        return null;
+    }
+
+    // Fungsi mengganti materi terpilih
+    function playMateri(element) {
+        // Reset kuis feedback
+        document.querySelector(".quiz-feedback-box").classList.add("d-none");
+        document.querySelectorAll(".quiz-opt-btn").forEach(function(b) {
+            b.className = "btn btn-outline-secondary btn-sm text-start p-2.5 rounded-3 quiz-opt-btn";
+        });
+
+        // Hapus kelas aktif dari playlist lain
+        playlistItems.forEach(function(item) {
+            item.classList.remove("active");
+        });
+        element.classList.add("active");
+
+        // Ambil data atribut
+        var videoUrl = element.getAttribute("data-video");
+        var name = element.getAttribute("data-name");
+        var desc = element.getAttribute("data-desc");
+        var attachment = element.getAttribute("data-attachment");
+        var isCompleted = element.getAttribute("data-completed") === "true";
+        var completeUrl = element.getAttribute("data-complete-url");
+
+        // Update UI info materi
+        activeTitle.textContent = name;
+        activeDesc.textContent = desc;
+
+        // Update File Attachment
+        if (attachment) {
+            fileBtn.href = attachment;
+            fileBox.classList.remove("d-none");
+        } else {
+            fileBox.classList.add("d-none");
+        }
+
+        // Update Tombol Selesai
+        if (btnTandaiSelesai) {
+            if (isCompleted) {
+                btnTandaiSelesai.classList.add("d-none");
+                btnSelesaiDisabled.classList.remove("d-none");
+            } else {
+                btnTandaiSelesai.href = completeUrl;
+                btnTandaiSelesai.classList.remove("d-none");
+                btnSelesaiDisabled.classList.add("d-none");
+            }
+        }
+
+        // Update Video Player secara dinamis ke container
+        if (videoUrl) {
+            var ytId = getYouTubeId(videoUrl);
+            if (ytId) {
+                // RENDER YOUTUBE IFRAME
+                videoContainer.innerHTML = `
+                    <iframe width="100%" height="100%" 
+                            src="https://www.youtube.com/embed/${ytId}?rel=0&autoplay=1&modestbranding=1" 
+                            title="YouTube video player" 
+                            frameborder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                            allowfullscreen>
+                    </iframe>
+                `;
+            } else {
+                // RENDER HTML5 MP4 VIDEO PLAYER
+                videoContainer.innerHTML = `
+                    <video id="mainVideoPlayer" class="w-100 h-100" 
+                           style="object-fit: contain; background:#000;" 
+                           controls muted playsinline autoplay
+                           preload="auto">
+                        <source src="${videoUrl}" type="video/mp4">
+                        Browser Anda tidak mendukung tag video.
+                    </video>
+                    <div id="videoLoadingSpinner" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);color:#fff;pointer-events:none;">
+                        <div style="width:40px;height:40px;border:4px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+                        <p style="margin-top:12px;font-size:13px;">Memuat video...</p>
+                    </div>
+                `;
+                var player = document.getElementById("mainVideoPlayer");
+                var spinner = document.getElementById("videoLoadingSpinner");
+                // Sembunyikan spinner saat video siap
+                player.addEventListener("canplay", function() {
+                    if (spinner) spinner.style.display = "none";
+                });
+                player.addEventListener("loadeddata", function() {
+                    if (spinner) spinner.style.display = "none";
+                });
+                player.load();
+                player.play().catch(function(e) {
+                    // Jika autoplay gagal, hapus muted dan minta user klik
+                    if (spinner) spinner.style.display = "none";
+                    console.log("Autoplay diblokir, klik play manual.");
+                });
+            }
+        } else {
+            // JIKA KOSONG
+            videoContainer.innerHTML = `
+                <div class="d-flex align-items-center justify-content-center text-white h-100 bg-dark">
+                    <p class="mb-0">Tidak ada video untuk materi ini</p>
+                </div>
+            `;
+        }
+    }
+
+    // Bind klik pada seluruh playlist item
+    playlistItems.forEach(function(item) {
+        item.addEventListener("click", function(e) {
+            e.preventDefault();
+            playMateri(item);
+        });
+    });
+
+    // Mainkan materi pertama secara default saat halaman dibuka
+    if (playlistItems.length > 0) {
+        // Sedikit delay agar DOM siap
+        setTimeout(function() { playMateri(playlistItems[0]); }, 100);
+    }
+
+    // 📝 Penanganan Kuis
+    var quizButtons = document.querySelectorAll(".quiz-opt-btn");
+    var feedbackBox = document.querySelector(".quiz-feedback-box");
+    var feedbackAlert = feedbackBox.querySelector(".alert");
+
+    quizButtons.forEach(function(btn) {
+        btn.addEventListener("click", function() {
+            var isCorrect = btn.getAttribute("data-correct") === "true";
+            
+            quizButtons.forEach(function(b) {
+                b.classList.remove("btn-success", "btn-danger", "text-white");
+                b.classList.add("btn-outline-secondary");
+            });
+
+            btn.classList.remove("btn-outline-secondary");
+            if (isCorrect) {
+                btn.classList.add("btn-success", "text-white");
+                feedbackAlert.className = "alert alert-success py-2 px-3 small mb-0 rounded-3 shadow-sm";
+                feedbackAlert.innerHTML = `
+                    <i class="bi bi-check-circle-fill me-2"></i> 
+                    <strong>Luar Biasa!</strong> Jawaban Anda benar. Pemahaman Anda tentang materi ini sangat baik!
+                `;
+            } else {
+                btn.classList.add("btn-danger", "text-white");
+                feedbackAlert.className = "alert alert-danger py-2 px-3 small mb-0 rounded-3 shadow-sm";
+                feedbackAlert.innerHTML = `
+                    <i class="bi bi-x-circle-fill me-2"></i> 
+                    <strong>Belum Tepat.</strong> Silakan tonton ulang video pembelajaran di atas dan coba lagi!
+                `;
+            }
+            feedbackBox.classList.remove("d-none");
+        });
+    });
+});
+</script>
+{% endblock %}

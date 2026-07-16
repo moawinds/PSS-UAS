@@ -1,0 +1,32 @@
+# System files
+.DS_Store
+Thumbs.db
+
+# PostgreSQL data directories
+**/postgres-data/
+postgres-data/
+
+# SQLite databases
+*.sqlite3
+*.db
+db.sqlite3
+
+# Video folders and video files
+VID-PEME=BELAJARAN.mp4/
+*.mp4
+*.avi
+*.mkv
+*.mov
+
+# PDF documents (e.g., lecture slides)
+*.pdf
+
+# Python virtual environment
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+
+# Local environment variables / secrets
+.env

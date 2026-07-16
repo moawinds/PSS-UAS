@@ -1,0 +1,22 @@
+{% extends "core/base.html" %}
+
+{% block title %}Profil Saya{% endblock %}
+{% block header %}Profil Pengguna{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card p-4 text-center">
+            <img src="https://ui-avatars.com/api/?name={{ user.username }}&background=0D6EFD&color=fff&size=120"
+                class="rounded-circle mx-auto mb-3 shadow-sm" width="120" height="120" alt="Avatar">
+            <h3 class="fw-bold text-dark mb-1">{{ user.username }}</h3>
+            <p class="text-muted mb-3">ID Anggota / NIM: <span class="fw-semibold">{{ user.username }}</span></p>
+            <hr>
+            <div class="text-start px-3">
+                <p class="mb-2"><strong>Status Autentikasi:</strong> <span class="badge bg-success">Aktif</span></p>
+                <p class="mb-0"><strong>Terdaftar Sejak:</strong> {{ user.date_joined|date:"d F Y" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

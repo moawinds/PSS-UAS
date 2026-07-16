@@ -1,0 +1,11 @@
+services:
+  mongo:
+    container_name: mongo
+    image: mongo:5.0.3
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:

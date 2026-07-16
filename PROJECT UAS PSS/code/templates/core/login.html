@@ -1,0 +1,30 @@
+{% extends "core/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Login Mahasiswa{% endblock %}
+
+{% block header %}Masuk LMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center my-5">
+    <div class="col-md-5">
+        <div class="card border-0 shadow-lg p-4" style="border-radius: 20px;">
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h3 class="fw-bold text-dark">Login Mahasiswa</h3>
+                    <p class="text-muted small">Masukkan username dan password Anda</p>
+                </div>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <div class="d-grid mt-4">
+                        <button type="submit"
+                            class="btn btn-primary btn-lg rounded-pill fw-bold py-2 shadow-sm">Masuk</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
