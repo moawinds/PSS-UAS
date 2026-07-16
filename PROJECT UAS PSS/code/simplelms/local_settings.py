@@ -9,9 +9,15 @@ ALLOWED_HOSTS = ['*']
 #     'core',
 # ]
 
-# Gunakan PostgreSQL jika ada di lingkungan Docker, 
-# jika tidak, biarkan pakai SQLite bawaan settings.py
-if os.environ.get('DB_HOST') == 'postgres' or os.environ.get('DOCKER_ENV'):
+import dj_database_url
+
+# Gunakan DATABASE_URL jika didefinisikan (misalnya di Render/Production)
+if os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.config(conn_max_age=600, ssl_require=False)
+    }
+# Gunakan PostgreSQL jika ada di lingkungan Docker lokal
+elif os.environ.get('DB_HOST') == 'postgres' or os.environ.get('DOCKER_ENV'):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',

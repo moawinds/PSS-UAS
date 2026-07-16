@@ -11,3 +11,4 @@ django-allauth
 django-ninja
 django-ninja-simple-jwt
 requests
+dj-database-url
