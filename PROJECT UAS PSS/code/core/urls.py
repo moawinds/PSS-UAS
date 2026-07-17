@@ -29,6 +29,7 @@ urlpatterns = [
     path('course/<int:pk>/payment/', views.payment_page, name='payment_page'),
     path('course/<int:pk>/process-payment/', views.process_payment, name='process_payment'),
     path('login/', views.login_view, name='login'),
+    path('google-login-mock/', views.google_login_mock, name='google_login_mock'),
     path('logout/', views.logout_view, name='logout'),
     
     # =====================================================================

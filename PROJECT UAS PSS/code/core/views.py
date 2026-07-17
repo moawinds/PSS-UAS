@@ -386,6 +386,46 @@ def login_view(request):
         form = AuthenticationForm()
     return render(request, 'core/login.html', {'form': form})
 
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@csrf_exempt
+def google_login_mock(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            first_name = data.get('first_name', 'Google')
+            last_name = data.get('last_name', 'User')
+            
+            if not email or '@' not in email:
+                return JsonResponse({'status': 'error', 'message': 'Email tidak valid'}, status=400)
+            
+            username = email.split('@')[0]
+            
+            user, created = User.objects.get_or_create(
+                email=email,
+                defaults={
+                    'username': username,
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'is_active': True
+                }
+            )
+            
+            if not created:
+                user.first_name = first_name
+                user.last_name = last_name
+                user.save()
+                
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            messages.success(request, f'Berhasil login via Google (Simulasi) sebagai {user.first_name}!')
+            return JsonResponse({'status': 'success', 'redirect_url': '/courses/'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
 def logout_view(request):
     logout(request)
     messages.success(request, 'Anda telah berhasil logout.')
